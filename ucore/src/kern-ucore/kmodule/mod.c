@@ -30,6 +30,8 @@ static list_entry_t modules = { &(modules), &(modules) };
 
 static char last_unloaded_module[MODULE_NAME_LEN + 1];
 
+extern char* no2dev[128];
+
 void *module_alloc(unsigned long size)
 {
 	return size == 0 ? NULL : kmalloc(size);
@@ -40,28 +42,29 @@ void module_free(struct module *module, void *region)
 	kfree(region);
 }
 
-static inline void *percpu_modalloc(unsigned long size, unsigned long align,
+/*static inline void *percpu_modalloc(unsigned long size, unsigned long align,
 				    const char *name)
 {
 	return NULL;
-}
+}*/
 
-static inline unsigned int find_pcpusec(struct elfhdr *hdr,
+/*static inline unsigned int find_pcpusec(struct elfhdr *hdr,
 					struct secthdr *sechdrs,
 					const char *secstrings)
 {
 	return 0;
-}
+}*/
 
-static inline int check_version(struct secthdr *sechdrs,
+/*static inline int check_version(struct secthdr *sechdrs,
 				unsigned int versindex,
 				const char *symname,
 				struct module *mod, const unsigned long *crc)
 {
 	return 1;
-}
+}*/
 
 /* Resolve a symbol for this module.  I.e. if we find one, record usage. Must be holding module_mutex. */
+//查找一个内核符号，如果已经被使用就返回NULL
 static const struct kernel_symbol *resolve_symbol(struct secthdr *sechdrs,
 						  unsigned int versindex,
 						  const char *name,
@@ -73,7 +76,7 @@ static const struct kernel_symbol *resolve_symbol(struct secthdr *sechdrs,
 	sym = find_symbol(name, &owner, &crc, 1);
 	if (sym) {
 		kprintf("\tresolve_symbol: symbol %s found\n", name);
-		if (!check_version(sechdrs, versindex, name, mod, crc) ||
+		if (/*!check_version(sechdrs, versindex, name, mod, crc) ||*/
 		    !use_module(mod, owner))
 			sym = NULL;
 	}
@@ -86,12 +89,12 @@ static inline int same_magic(const char *amagic, const char *bmagic,
 	return strcmp(amagic, bmagic) == 0;
 }
 
-static inline int check_modstruct_version(struct secthdr *sechdrs,
+/*static inline int check_modstruct_version(struct secthdr *sechdrs,
 					  unsigned int versindex,
 					  struct module *mod)
 {
 	return 1;
-}
+}*/
 
 static void set_license(struct module *mod, const char *license)
 {
@@ -99,7 +102,7 @@ static void set_license(struct module *mod, const char *license)
 		license = "unspecified";
 	// TODO: the feature is left for future use.
 }
-
+//跳过第一个字符串
 static char *next_string(char *string, unsigned long *secsize)
 {
 	/* Skip non-zero chars */
@@ -123,7 +126,7 @@ static char *get_modinfo(struct secthdr *sechdrs,
 	char *p;
 	unsigned int taglen = strlen(tag);
 	unsigned long size = sechdrs[info].sh_size;
-
+	//找到tag=的内容
 	for (p = (char *)sechdrs[info].sh_addr; p; p = next_string(p, &size)) {
 		if (strncmp(p, tag, taglen) == 0 && p[taglen] == '=')
 			return p + taglen + 1;
@@ -190,7 +193,7 @@ static const struct kernel_symbol *lookup_symbol(const char *name, const struct 
 	return NULL;
 }
 
-static int is_exported(const char *name, unsigned long value,
+/*static int is_exported(const char *name, unsigned long value,
 		       const struct module *mod)
 {
 	const struct kernel_symbol *ks;
@@ -250,7 +253,7 @@ bool is_module_text_address(unsigned long addr)
 	bool ret;
 	ret = __module_text_address(addr) != NULL;
 	return ret;
-}
+}*/
 
 struct module *find_module(const char *name)
 {
@@ -325,9 +328,9 @@ static bool find_symbol_in_section(const struct symsearch *syms,
 				   void *data)
 {
 	struct find_symbol_arg *fsa = data;
-	kprintf
+	/*kprintf
 	    ("\tfind_symbol_in_section: kernel symbol %s, searching for %s\n",
-	     syms->start[symnum].name, fsa->name);
+	     syms->start[symnum].name, fsa->name);*/
 	if (strcmp(syms->start[symnum].name, fsa->name) != 0)
 		return 0;
 	fsa->owner = owner;
@@ -358,7 +361,7 @@ const struct kernel_symbol *find_symbol(const char *name,
 
 EXPORT_SYMBOL(find_symbol);
 
-int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
+/*int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 		       char *name, char *module_name, int *exported)
 {
 	struct module *mod;
@@ -377,9 +380,9 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 		symnum -= mod->num_symtab;
 	}
 	return -1;
-}
+}*/
 
-static unsigned long mod_find_symname(struct module *mod, const char *name)
+/*static unsigned long mod_find_symname(struct module *mod, const char *name)
 {
 	unsigned int i;
 	for (i = 0; i < mod->num_symtab; i++)
@@ -410,8 +413,8 @@ unsigned long module_kallsyms_lookup_name(const char *name)
 	}
 	return ret;
 }
-
-int module_kallsyms_on_each_symbol(int (*fn)
+*/
+/*int module_kallsyms_on_each_symbol(int (*fn)
 				    (void *, const char *, struct module *,
 				     unsigned long), void *data)
 {
@@ -432,8 +435,8 @@ int module_kallsyms_on_each_symbol(int (*fn)
 	return 0;
 
 }
-
-unsigned int module_refcount(struct module *mod)
+*/
+/*unsigned int module_refcount(struct module *mod)
 {
 	return atomic_read(__module_ref_addr(mod, 0));
 }
@@ -444,7 +447,7 @@ void __module_put_and_exit(struct module *mod, long code)
 {
 	module_put(mod);
 	do_exit(code);
-}
+}*/
 
 struct module_use {
 	list_entry_t list;
@@ -712,7 +715,7 @@ static int simplify_symbols(struct secthdr *sechdrs,
 	return ret;
 }
 
-static const char vermagic[] = "";
+//static const char vermagic[] = "";
 
 static noinline struct module *load_module(void __user * umod,
 					   unsigned long len,
@@ -721,7 +724,7 @@ static noinline struct module *load_module(void __user * umod,
 	struct elfhdr *hdr;
 	struct secthdr *sechdrs;
 	char *secstrings, *args, *modmagic, *strtab = NULL;
-	char *staging;
+	//char *staging;
 
 	unsigned int i;
 	unsigned int symindex = 0;
@@ -740,8 +743,9 @@ static noinline struct module *load_module(void __user * umod,
 
 	kprintf("load_module: copy_from_user\n");
 
-	struct mm_struct *mm = current->mm;
+	struct mm_struct *mm = current->mm;//当前进程？不知道干吗的
 	lock_mm(mm);
+	//把模块从用户空间复制出来
 	if (!copy_from_user(mm, hdr, umod, len, 1)) {
 		unlock_mm(mm);
 		goto free_hdr;
@@ -797,7 +801,7 @@ static noinline struct module *load_module(void __user * umod,
 	}
 	versindex = find_sec(hdr, sechdrs, secstrings, "__versions");
 	infoindex = find_sec(hdr, sechdrs, secstrings, ".modinfo");
-	pcpuindex = find_pcpusec(hdr, sechdrs, secstrings);
+	pcpuindex = 0;//find_pcpusec(hdr, sechdrs, secstrings);
 
 	// don't keep modinfo and version
 	sechdrs[infoindex].sh_flags &= ~(unsigned long)SHF_ALLOC;
@@ -807,9 +811,9 @@ static noinline struct module *load_module(void __user * umod,
 	sechdrs[symindex].sh_flags |= SHF_ALLOC;
 	sechdrs[strindex].sh_flags |= SHF_ALLOC;
 
-	if (!check_modstruct_version(sechdrs, versindex, mod)) {
+	/*if (!check_modstruct_version(sechdrs, versindex, mod)) {
 		goto free_hdr;
-	}
+	}*/
 
 	/*
 	   modmagic = get_modinfo(sechdrs, infoindex, "vermagic");
@@ -818,14 +822,14 @@ static noinline struct module *load_module(void __user * umod,
 	   kprintf("load_module: bad vermagic\n");
 	   goto free_hdr;
 	   } else if (!same_magic(modmagic, vermagic, versindex)) {
-	   ; 
+	   ;
 	   // TODO: module magic is left for future use.
 	   }
 	 */
 
-	staging = get_modinfo(sechdrs, infoindex, "staging");
+	//staging = get_modinfo(sechdrs, infoindex, "staging");
 	// TODO: staging is left for future use.
-
+	
 	if (find_module(mod->name)) {
 		kprintf("load_module: module %s exists\n", mod->name);
 		goto free_mod;
@@ -839,6 +843,7 @@ static noinline struct module *load_module(void __user * umod,
 	// TODO: percpu is no longer needed.
 
 	layout_sections(mod, hdr, sechdrs, secstrings);
+	
 
 	ptr = module_alloc_update_bounds(mod->core_size);
 
@@ -857,6 +862,7 @@ static noinline struct module *load_module(void __user * umod,
 	mod->module_init = ptr;
 
 	kprintf("load_module: final section addresses:\n");
+
 	for (i = 0; i < hdr->e_shnum; i++) {
 		void *dest;
 		if (!(sechdrs[i].sh_flags & SHF_ALLOC)) {
@@ -912,9 +918,8 @@ static noinline struct module *load_module(void __user * umod,
 		if (sechdrs[i].sh_type == SHT_REL)
 			err = apply_relocate(sechdrs, strtab, symindex, i, mod);
 		else if (sechdrs[i].sh_type == SHT_RELA)
-			err =
-			    apply_relocate_add(sechdrs, strtab, symindex, i,
-					       mod);
+			//err = apply_relocate_add(sechdrs, strtab, symindex, i, mod);
+			err = apply_relocate(sechdrs, strtab, symindex, i, mod);
 
 		if (err < 0)
 			goto cleanup;
@@ -965,7 +970,6 @@ int do_init_module(void __user * umod, unsigned long len,
 	int ret = 0;
 
 	// TODO: non-preemptive kernel does not need to lock module mutex
-
 	mod = load_module(umod, len, uargs);
 	if (mod == NULL) {
 		// TODO: non-preemptive kernel does not need to unlock module mutex
@@ -1003,7 +1007,7 @@ int do_cleanup_module(const char __user * name_user)
 {
 	struct module *mod;
 	char name[MODULE_NAME_LEN];
-	int ret, forced = 0;
+	int ret = 0, forced = 0;
 
 	struct mm_struct *mm = current->mm;
 	lock_mm(mm);
@@ -1021,11 +1025,12 @@ int do_cleanup_module(const char __user * name_user)
 	if (!mod) {
 		ret = -E_NOENT;
 		goto out;
+		//return -E_NOENT;
 	}
-
 	if (!list_empty(&mod->modules_which_use_me)) {
 		ret = -E_INVAL;
 		goto out;
+		//return -E_INVAL;
 	}
 
 	if (mod->state != MODULE_STATE_LIVE) {
@@ -1081,7 +1086,74 @@ int module_finalize(const struct elfhdr *hdr,
 	return 0;
 }
 
+int (*add_func)(int x, int y);
+int (*mul_func)(int x, int y);
+EXPORT_SYMBOL(add_func);
+EXPORT_SYMBOL(mul_func);
+
+extern struct sched_class *sched_class;
+extern struct sched_class RR_sched_class;
+extern struct run_queue *rq;
+extern inline bool mod_init_save(void);
+extern inline void mod_init_restore(bool flag);
+//EXPORT_SYMBOL(sched_class);
+//EXPORT_SYMBOL(RR_sched_class);
+//EXPORT_SYMBOL(rq);
+//EXPORT_SYMBOL(mod_init_save);
+//EXPORT_SYMBOL(mod_init_restore);
+
 void mod_init()
 {
+	add_func = NULL;
+	mul_func = NULL;
 	// TODO: read mod dep file
 }
+
+int do_mod_add(int a, int b) {
+	int ret = 0;
+	if (add_func == NULL)
+		kprintf("module mod-add not loaded.\n");
+	else
+		ret = add_func(a, b);
+	return ret;
+}
+
+int do_mod_mul(int a, int b) {
+	int ret = 0;
+	if (mul_func == NULL)
+		kprintf("module mod-mul not loaded.\n");
+	else
+		ret = mul_func(a, b);
+	return ret;
+}
+EXPORT_SYMBOL(hash32);
+EXPORT_SYMBOL(strlen);
+EXPORT_SYMBOL(strchr);
+EXPORT_SYMBOL(strcmp);
+EXPORT_SYMBOL(strncmp);
+EXPORT_SYMBOL(memset);
+EXPORT_SYMBOL(inode_init);
+EXPORT_SYMBOL(vfs_mount);
+EXPORT_SYMBOL(__alloc_fs);
+EXPORT_SYMBOL(__alloc_inode);
+EXPORT_SYMBOL(__warn);
+EXPORT_SYMBOL(iobuf_skip);
+EXPORT_SYMBOL(ide_read_secs);
+EXPORT_SYMBOL(null_vop_unimp);
+EXPORT_SYMBOL(kmalloc);
+EXPORT_SYMBOL(strcpy);
+EXPORT_SYMBOL(unregister_filesystem);
+EXPORT_SYMBOL(inode_check);
+EXPORT_SYMBOL(kfree);
+EXPORT_SYMBOL(register_filesystem);
+EXPORT_SYMBOL(ide_write_secs);
+EXPORT_SYMBOL(null_vop_notdir);
+EXPORT_SYMBOL(inode_ref_inc);
+EXPORT_SYMBOL(__panic);
+EXPORT_SYMBOL(inode_ref_dec);
+EXPORT_SYMBOL(null_vop_inval);
+EXPORT_SYMBOL(stricmp);
+EXPORT_SYMBOL(iobuf_move);
+EXPORT_SYMBOL(null_vop_isdir);
+EXPORT_SYMBOL(kprintf);
+EXPORT_SYMBOL(no2dev);

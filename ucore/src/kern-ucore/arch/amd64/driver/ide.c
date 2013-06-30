@@ -88,13 +88,13 @@ void ide_init(void)
 {
 	static_assert((SECTSIZE % 4) == 0);
 	if(initrd_begin){
-		struct ide_device *dev = &ide_devices[DISK0_DEV_NO];
+		struct ide_device *dev = &ide_devices[RAMDISK_DEV_NO];
 		ramdisk_init_struct(dev);
 		ramdisk_init(dev);
-		return;
+		//return;
 	}
 	unsigned short ideno, iobase;
-	for (ideno = 0; ideno < MAX_IDE; ideno++) {
+	for (ideno = 0; ideno < MAX_IDE - 1; ideno++) {
 		/* assume that no device here */
 		ide_devices[ideno].valid = 0;
 
@@ -163,6 +163,7 @@ void ide_init(void)
 
 	sem_init(&(channels[0].sem), 1);
 	sem_init(&(channels[1].sem), 1);
+	kprintf("ide_init() ok\n");
 }
 
 bool ide_device_valid(unsigned short ideno)

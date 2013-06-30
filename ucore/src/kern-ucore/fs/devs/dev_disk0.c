@@ -133,6 +133,7 @@ static void disk0_device_init(struct device *dev)
 	if ((disk0_buffer = kmalloc(DISK0_BUFSIZE)) == NULL) {
 		panic("disk0 alloc buffer failed.\n");
 	}
+	kprintf("disk0_device_init %d\n", dev->d_blocks);
 }
 
 void dev_init_disk0(void)

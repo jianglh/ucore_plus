@@ -106,6 +106,27 @@ int vfs_sync(void)
 	return 0;
 }
 
+int find_dev(const char *devname, struct inode **node_store)
+{
+	assert(devname != NULL);
+	if (!list_empty(&vdev_list)) {
+		lock_vdev_list();
+		{
+			list_entry_t *list = &vdev_list, *le = list;
+			while ((le = list_next(le)) != list) {
+				vfs_dev_t *vdev = le2vdev(le, vdev_link);
+				if (strcmp(vdev->devname, devname) == 0) {
+					*node_store = vdev->devnode;
+					unlock_vdev_list();
+					return 0;
+				}
+			}
+		}
+		unlock_vdev_list();
+	}
+	return -E_NO_DEV;
+}
+
 /*
  * Given a device name (lhd0, emu0, somevolname, null, etc.), hand
  * back an appropriate inode.
@@ -249,6 +270,43 @@ failed_cleanup_name:
 	return ret;
 }
 
+static int
+vfs_do_dec(const char *devname)
+{
+	assert(devname != NULL);
+
+	int ret = -E_NO_MEM;
+	char *s_devname;
+	if ((s_devname = strdup(devname)) == NULL) {
+		return ret;
+	}
+
+	lock_vdev_list();
+	if (check_devname_conflict(s_devname)) {
+		unlock_vdev_list();
+		return -E_NOENT;
+	}
+
+
+	list_entry_t *list = &vdev_list, *le = list;
+	while ((le = list_next(le)) != list) {
+		vfs_dev_t *vdev = le2vdev(le, vdev_link);
+		if (strcmp(vdev->devname, devname) == 0) {
+			if (vdev->fs != NULL) 
+			{
+				unlock_vdev_list();
+				return -E_BUSY;
+			}
+			list_del(le);
+			break;	
+		}
+	};
+	unlock_vdev_list();
+	return 0;
+}
+
+
+
 /*
  * Add a filesystem that does not have an underlying device.
  * This is used for emufs(not implementation???), but might also be used for network
@@ -268,6 +326,11 @@ int vfs_add_dev(const char *devname, struct inode *devnode, bool mountable)
 	return vfs_do_add(devname, devnode, NULL, mountable);
 }
 
+int vfs_dec_dev(const char *devname)
+{
+	return vfs_do_dec(devname);
+}
+
 /*
  * Look for a mountable device named DEVNAME.
  * Should already hold an lock::vdev_list_sem.
@@ -285,7 +348,20 @@ static int find_mount(const char *devname, vfs_dev_t ** vdev_store)
 	}
 	return -E_NO_DEV;
 }
-
+/*
+static int find_devno(unsigned short devno, struct inode ** devnode)
+{
+	list_entry_t *list = &vdev_list, *le = list;
+	while ((le = list_next(le)) != list) {
+		vfs_dev_t *vdev = le2vdev(le, vdev_link);
+		if () {
+			*vdev_store = vdev;
+			return 0;
+		}
+	}
+	return -E_NO_DEV;
+}
+*/
 /*
  * Mount a filesystem. Once we've found the device, call MOUNTFUNC to
  * set up the filesystem and hand back a struct fs.

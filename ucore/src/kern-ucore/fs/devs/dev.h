@@ -12,6 +12,17 @@ struct file_operations;
 #define __user
 #endif
 
+struct device;
+
+struct dev_list
+{
+	size_t start_sector;
+	size_t len;
+	size_t offset;
+	struct device *dev;
+	struct dev_list *next;
+};
+
 /*
  * Filesystem-namespace-accessible device.
  * d_io is for both reads and writes; the iob indicates the io buffer, write indicates direction.
@@ -21,6 +32,11 @@ struct ucore_device {
 #else
 struct device {
 #endif
+	unsigned short d_ideno;
+	unsigned short d_devno;
+	struct dev_list *map_list; 
+	size_t d_offset_sectors;
+	size_t d_total_sectors;
 	size_t d_blocks;
 	size_t d_blocksize;
 	/* for Linux */
@@ -57,5 +73,6 @@ struct device {
 void dev_init(void);
 /* Create inode for a vfs-level device. */
 struct inode *dev_create_inode(void);
+int do_dmsetup(const char *cmd, const char *source, const char *rule);
 
 #endif /* !__KERN_FS_DEVS_DEV_H__ */

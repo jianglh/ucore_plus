@@ -157,6 +157,7 @@ sfs_init_freemap(struct device *dev, struct bitmap *freemap, uint32_t blkno,
 	return 0;
 }
 
+
 /*
  * SFS Mount.
  *
@@ -198,25 +199,21 @@ static int sfs_do_mount(struct device *dev, struct fs **fs_store)
 	if ((fs = alloc_fs(sfs)) == NULL) {
 		return -E_NO_MEM;
 	}
-
 	/* get sfs from fs.fs_info.__sfs_info */
 	struct sfs_fs *sfs = fsop_info(fs, sfs);
 	sfs->dev = dev;
 
 	int ret = -E_NO_MEM;
-
 	void *sfs_buffer;
 	if ((sfs->sfs_buffer = sfs_buffer = kmalloc(SFS_BLKSIZE)) == NULL) {
 		goto failed_cleanup_fs;
 	}
-
 	/* load and check sfs's superblock */
 	if ((ret = sfs_init_read(dev, SFS_BLKN_SUPER, sfs_buffer)) != 0) {
 		goto failed_cleanup_sfs_buffer;
 	}
 
 	ret = -E_INVAL;
-
 	struct sfs_super *super = sfs_buffer;
 
 	/* Make some simple sanity checks */
@@ -235,7 +232,6 @@ static int sfs_do_mount(struct device *dev, struct fs **fs_store)
 	sfs->super = *super;
 
 	ret = -E_NO_MEM;
-
 	uint32_t i;
 
 	/* alloc and initialize hash list */
@@ -247,7 +243,6 @@ static int sfs_do_mount(struct device *dev, struct fs **fs_store)
 	for (i = 0; i < SFS_HLIST_SIZE; i++) {
 		list_init(hash_list + i);
 	}
-
 	/* load and check freemap (free space bitmap in disk) */
 	struct bitmap *freemap;
 	uint32_t freemap_size_nbits = sfs_freemap_bits(super);
@@ -261,7 +256,6 @@ static int sfs_do_mount(struct device *dev, struct fs **fs_store)
 			      freemap_size_nblks, sfs_buffer)) != 0) {
 		goto failed_cleanup_freemap;
 	}
-
 	uint32_t blocks = sfs->super.blocks, unused_blocks = 0;
 	for (i = 0; i < freemap_size_nbits; i++) {
 		if (bitmap_test(freemap, i)) {
@@ -307,3 +301,88 @@ int sfs_mount(const char *devname)
 {
 	return vfs_mount(devname, sfs_do_mount);
 }
+
+static int sfs_init_write(struct device *dev, uint32_t blkno, void *blk_buffer)
+{
+	struct iobuf __iob, *iob =
+	    iobuf_init(&__iob, blk_buffer, SFS_BLKSIZE, blkno * SFS_BLKSIZE);
+	return dop_io(dev, iob, 1);
+}
+
+int do_mksfs(const char* dev_name)
+{
+	struct inode *node_store;
+		
+	find_dev(dev_name, &node_store);
+
+	struct device *dev = vop_info(node_store, device);
+
+	kprintf("ok1\n");
+	unsigned char *buffer = kmalloc(SFS_BLKSIZE);
+	if (buffer == NULL)
+		return -1;
+	int i = 0;
+	memset(buffer, 0x00, SFS_BLKSIZE);
+	struct sfs_super *super = (struct sfs_super*) buffer;
+	super->magic = SFS_MAGIC;
+	super->blocks = dev->d_total_sectors / 8;
+	super->unused_blocks = super->blocks - 3;
+	strcpy(super->info, "simple file system");
+	
+	
+
+
+	sfs_init_write(dev, 0, buffer);
+
+	for (i = 0; i < 32; i+=2) {
+		kprintf("%02x%02x ", buffer[i], buffer[i+1]);
+		if ((i + 2) % 16 == 0) kprintf("\n");
+	}
+
+	kprintf("\n\n");
+
+
+	memset(buffer, 0x00, SFS_BLKSIZE);
+	buffer[4] = 0x01;
+	buffer[8] = 0x02;
+	buffer[10] = 0x02;
+	sfs_init_write(dev, 1, buffer);
+	
+	for (i = 0; i < 32; i+=2) {
+		kprintf("%02x%02x ", buffer[i], buffer[i+1]);
+		if ((i + 2) % 16 == 0) kprintf("\n");
+	}
+
+
+	/*
+	uint32_t nbits = dev->d_total_sectors / 8;
+	uint32_t nwords = ROUNDUP_DIV(nbits, 32);
+	struct bitmap * map = bitmap_create(nbits);
+	memset(buffer, 0xFF, SFS_BLKSIZE);
+	//bitmap_free(map, 0);
+	//bitmap_free(map, 1);
+	//bitmap_free(map, 2);
+	memcpy(buffer, map, 4 * nwords);
+	for (i = 0; i < 32; i+=2) {
+		kprintf("%02x%02x ", buffer[i], buffer[i+1]);
+		if ((i + 2) % 16 == 0) kprintf("\n");
+	}
+	kprintf("\n\n");
+
+	bitmap_destroy(map);
+	*/
+	
+	memset(buffer, 0, SFS_BLKSIZE);
+	uint32_t nbits = dev->d_total_sectors / 8; 
+	uint32_t nwords = nbits / 8;  //32 kB per words
+	while (nwords)
+		buffer[--nwords] = 0xFF;
+	buffer[0] = 0xF8;	
+	sfs_init_write(dev, 2, buffer);
+
+
+
+	kfree(buffer);
+	return 0;
+}
+

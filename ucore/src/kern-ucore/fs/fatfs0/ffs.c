@@ -1,7 +1,7 @@
 #include <types.h>
 #include <error.h>
 #include <assert.h>
-#include "fatfs/ffconf.h"
+#include "ffconf.h"
 #include "ffs.h"
 
 DWORD get_fattime(void)
@@ -17,9 +17,17 @@ DWORD get_fattime(void)
 void ffs_init()
 {
 	int ret;
+	if ((ret = register_filesystem("ffs", ffs_mount)) != 0) {
+		panic("failed: ffs: register_filesystem: %e.\n", ret);
+	}
+	kprintf("ffs_init() finish\n");
+	
+	/*
+	int ret;
 	if ((ret = ffs_mount("mmc0")) != 0) {
 		panic("failed: ffs: ffs_mount: %e.\n", ret);
 	}
+	*/
 }
 
 #if _FS_REENTRANT

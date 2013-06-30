@@ -71,6 +71,13 @@
 #define SYS_list_module     152
 #define SYS_mount           153
 #define SYS_umount			154
+#define SYS_dmsetup			155
+#define SYS_mksfs			156
+
+/* module */
+#define SYS_query_module    170
+#define SYS_mod_add         171
+#define SYS_mod_mul         172
 
 /* liucong 20121109 */
 #define SYS_rf212           199

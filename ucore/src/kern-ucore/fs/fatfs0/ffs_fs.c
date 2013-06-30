@@ -35,9 +35,13 @@ static int ffs_sync(struct fs *fs)
 /* return root inode of filesystem */
 static struct inode *ffs_get_root(struct fs *fs)
 {
+	//kprintf("ffs_get_root() in\n");
 	struct inode *node;
 	int ret;
-	if ((ret = ffs_load_inode(fsop_info(fs, ffs), &node, "0:/", NULL)) != 0) {
+	struct ffs_fs *ffs = fsop_info(fs, ffs);
+	char dev[] = "0:/";
+	dev[0] += ffs->dev->d_devno;
+	if ((ret = ffs_load_inode(ffs, &node, dev, NULL)) != 0) {
 		panic("load ffs root failed: %e", ret);
 	}
 
@@ -97,7 +101,8 @@ static int ffs_do_mount(struct device *dev, struct fs **fs_store)
 
 	FRESULT result;
 	struct FATFS *fatfs = kmalloc(FFS_BLKSIZE);
-	if ((result = f_mount(0, fatfs)) != FR_OK) {
+	kprintf("try mount ffs, dev->d_devno = %d\n", dev->d_devno);
+	if ((result = f_mount(dev->d_devno, fatfs)) != FR_OK) {
 		FAT_PRINTF("[ffs_do_mount], failed = %d\n", result);
 		goto failed_cleanup_ffs;
 	}
@@ -157,6 +162,7 @@ static int ffs_do_mount(struct device *dev, struct fs **fs_store)
 	}
 	ffs->inode_list->next = ffs->inode_list->prev = NULL;
 	ffs->inocnt = 0;
+	ffs->dev = dev;
 
 	FAT_PRINTF("ffs_do_mount done\n");
 	fs->fs_sync = ffs_sync;

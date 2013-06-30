@@ -96,7 +96,7 @@ case $UCONFIG_ARCH in
             $EXTRA_OPT
         ;;
     amd64)
-        QEMU=qemu
+        QEMU=qemu-system-x86_64
         which qemu-system-x86_64 > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             QEMU=qemu-system-x86_64

@@ -255,5 +255,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+	printf("sh exit\n");
 	return 0;
 }

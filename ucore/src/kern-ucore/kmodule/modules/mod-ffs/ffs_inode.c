@@ -12,10 +12,12 @@
 #include <iobuf.h>
 #include <error.h>
 #include <assert.h>
-#include "fatfs/ffs.h"
+#include "ffs.h"
 
 static const struct inode_ops ffs_node_dirops;
 static const struct inode_ops ffs_node_fileops;
+
+//#define PRINTFSINFO 1
 
 /* *
  *  ffs_get_ops:    return corresponding inode_ops according to the type
@@ -317,7 +319,8 @@ ffs_load_inode(struct ffs_fs *ffs, struct inode **node_store, TCHAR * path,
 	struct FILINFO fno;
 	FRESULT result;
 
-	if (strcmp(path, "0:/")) {
+	if (path[1] != ':' && path[2] != '/') {
+	//if (strcmp(path, "0:/")) {
 		/* if not root inode */
 		char *actualPath = NULL;
 		char *absPath;

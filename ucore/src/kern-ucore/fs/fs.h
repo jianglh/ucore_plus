@@ -9,9 +9,11 @@
 #define SECTSIZE            512
 #define PAGE_NSECT          (PGSIZE / SECTSIZE)
 
-#define SWAP_DEV_NO         1
-#define DISK0_DEV_NO        2
-#define MMC0_DEV_NO        3
+//#define SWAP_DEV_NO         1
+//#define DISK0_DEV_NO        2
+#define MMC0_DEV_NO        		3
+#define RAMDISK_DEV_NO			3
+#define DEVICE_MAPPER_DEV_NO	5
 
 void fs_init(void);
 void fs_cleanup(void);

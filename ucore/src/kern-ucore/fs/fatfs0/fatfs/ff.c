@@ -2980,7 +2980,7 @@ FRESULT f_opendir (
 {
 	FRESULT res;
 	DEF_NAMEBUF;
-
+	//kprintf("f_opendir, path=%s\n", path);
 
 	res = chk_mounted(&path, &dj->fs, 0);
 	if (res == FR_OK) {

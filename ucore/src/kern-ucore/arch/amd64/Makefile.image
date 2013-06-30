@@ -43,7 +43,7 @@ $(BOOTOTHERS_OBJ): $(BOOTOTHERS_SRC)
 	$(Q)$(TARGET_CC) -D__ASSEMBLY__ $(TARGET_CFLAGS) -c -o $@ $<
 
 $(BOOTOTHERS_OUT): $(BOOTOTHERS_OBJ)
-	$(Q)$(TARGET_LD) -Ttext=0x7000 -o $@.elf $<
+	$(Q)$(TARGET_LD) -melf_x86_64 -Ttext=0x7000 -o $@.elf $<
 	$(Q)$(TARGET_OBJCOPY) -S -O binary $@.elf $@
 
 $(PIGGYCODE_SRC): $(PIGGYCODE_SRC_IN)

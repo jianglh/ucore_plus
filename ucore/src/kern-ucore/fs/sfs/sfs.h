@@ -139,4 +139,6 @@ int sfs_clear_block(struct sfs_fs *sfs, uint32_t blkno, uint32_t nblks);
 
 int sfs_load_inode(struct sfs_fs *sfs, struct inode **node_store, uint32_t ino);
 
+int sfs_mksfs(struct device *dev);
+
 #endif /* !__KERN_FS_SFS_SFS_H__ */

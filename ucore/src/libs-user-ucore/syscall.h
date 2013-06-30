@@ -70,6 +70,8 @@ int sys_list_module();
 int sys_mount(const char *source, const char *target,
 	      const char *filesystemtype, const void *data);
 int sys_umount(const char *target);
+int sys_dmsetup(const char *cmd, const char *source, const char *rule);
+int sys_mksfs(const char *dev_name);
 
 int sys_ioctl(int d, int request, unsigned long data);
 

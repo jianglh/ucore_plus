@@ -74,6 +74,7 @@ static void disk1_device_init(struct device *dev)
  */
 void dev_init_disk1(void)
 {
+	kprintf("dev_init_disk1()\n");
 	struct inode *node;
 	if ((node = dev_create_inode()) == NULL) {
 		panic("disk1: dev_create_node.\n");

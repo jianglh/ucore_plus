@@ -253,8 +253,20 @@ int sys_list_module()
 	return syscall(SYS_list_module);
 }
 
-int
-sys_mount(const char *source, const char *target, const char *filesystemtype,
+int sys_query_module(const char* name)
+{
+	return syscall(SYS_query_module,name);
+}
+
+int sys_mod_add(int a, int b) {
+    return syscall(SYS_mod_add, a, b);
+}
+
+int sys_mod_mul(int a, int b) {
+    return syscall(SYS_mod_mul, a, b);
+}
+
+int sys_mount(const char *source, const char *target, const char *filesystemtype,
 	  const void *data)
 {
 	return syscall(SYS_mount, source, target, filesystemtype, data);
@@ -263,6 +275,16 @@ sys_mount(const char *source, const char *target, const char *filesystemtype,
 int sys_umount(const char *target)
 {
 	return syscall(SYS_umount, target);
+}
+
+int sys_dmsetup(const char *cmd, const char *target, const char *rule)
+{
+	return syscall(SYS_dmsetup, cmd, target, rule);
+}
+
+int sys_mksfs(const char *dev_name)
+{
+	return syscall(SYS_mksfs, dev_name);
 }
 
 int sys_rf212_send(uint8_t len, uint8_t * data)
@@ -438,6 +460,9 @@ _syscall1(int, cleanup_module, const char *, name);
 _syscall4(int, mount, const char *, source, const char *, target, const char *,
 	  filesystemtype, const void *, data);
 _syscall1(int, umount, const char *, target);
+_syscall2(int, mod_add, int, a, int, b);
+_syscall2(int, mod_mul, int, a, int, b);
+_syscall1(int, query_module, const char*, name);
 
 int sys_send_event(int pid, int event, unsigned int timeout)
 {

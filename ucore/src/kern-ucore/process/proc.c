@@ -70,7 +70,7 @@ SYS_kill        : kill process                            -->do_kill-->proc->fla
 SYS_getpid      : get the process's pid
 
 */
-
+extern char* bootdevice;
 struct proc_struct *initproc;
 struct proc_struct *kswapd;
 
@@ -1960,7 +1960,7 @@ static int init_main(void *arg)
 #endif
 
 	int ret;
-	char root[] = "disk0:";
+	char *root = stradd(bootdevice, ":");
 	if ((ret = vfs_set_bootfs(root)) != 0) {
 		panic("set boot fs failed: %e.\n", ret);
 	}

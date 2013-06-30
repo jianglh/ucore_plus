@@ -333,6 +333,78 @@ static uint64_t sys_halt(uint64_t arg[])
 	panic("halt returned");
 }
 
+static uint64_t sys_mount(uint64_t arg[])
+{
+	const char *source = (const char *)arg[0];
+	const char *target = (const char *)arg[1];
+	const char *filesystemtype = (const char *)arg[2];
+	const void *data = (const void *)arg[3];
+	return do_mount(source, filesystemtype);
+}
+
+static uint64_t sys_umount(uint64_t arg[])
+{
+	const char *target = (const char *)arg[0];
+	return do_umount(target);
+}
+
+static uint64_t sys_dmsetup(uint64_t arg[])
+{
+	const char *cmd = (const char *)arg[0];
+	const char *source = (const char *)arg[1];
+	const char *rule = (const char *)arg[2];
+	return do_dmsetup(cmd, source, rule);
+}
+
+static uint64_t sys_mksfs(uint64_t arg[])
+{
+	const char *dev_name = (const char *)arg[0];
+	return do_mksfs(dev_name);
+}
+
+
+
+static uint64_t sys_init_module(uint64_t arg[])
+{
+	void __user *umod = (void __user *)arg[0];
+	unsigned long len = (unsigned long)arg[1];
+	const char *urgs = (const char *)arg[2];
+	return do_init_module(umod, len, urgs);
+}
+
+static uint64_t sys_cleanup_module(uint64_t arg[])
+{
+	const char __user *name = (const char __user *)arg[0];
+	return do_cleanup_module(name);
+}
+
+static uint64_t sys_list_module(uint64_t arg[])
+{
+	print_modules();
+	return 0;
+}
+
+static uint64_t sys_query_module(uint64_t arg[])
+{
+	const char* name=(const char*)arg[0];
+	return find_module(name);
+}
+
+static uint64_t sys_mod_add(uint64_t arg[])
+{
+	int a = (int)arg[0];
+	int b = (int)arg[1];
+	return do_mod_add(a, b);
+}
+
+static uint64_t sys_mod_mul(uint64_t arg[])
+{
+	int a = (int)arg[0];
+	int b = (int)arg[1];
+	return do_mod_mul(a, b);
+}
+
+
 static uint64_t(*syscalls[]) (uint64_t arg[]) = {
 [SYS_exit] sys_exit,
 	    [SYS_fork] sys_fork,
@@ -377,8 +449,22 @@ static uint64_t(*syscalls[]) (uint64_t arg[]) = {
 	    [SYS_rename] sys_rename,
 	    [SYS_unlink] sys_unlink,
 	    [SYS_getdirentry] sys_getdirentry,
-	    [SYS_dup] sys_dup,[SYS_pipe] sys_pipe,[SYS_mkfifo] sys_mkfifo,
-            [SYS_halt] sys_halt,};
+	    [SYS_dup] sys_dup,
+	    [SYS_pipe] sys_pipe,
+	    [SYS_mkfifo] sys_mkfifo,
+	    [SYS_mount] sys_mount,
+	    [SYS_umount] sys_umount,
+	    [SYS_dmsetup] sys_dmsetup,
+	    [SYS_mksfs] sys_mksfs,
+        [SYS_halt] sys_halt,
+
+    	[SYS_init_module] sys_init_module,
+	    [SYS_cleanup_module] sys_cleanup_module,
+	    [SYS_list_module] sys_list_module,
+		[SYS_query_module] sys_query_module,
+	    [SYS_mod_add] sys_mod_add,
+	    [SYS_mod_mul] sys_mod_mul
+	};
 
 #define NUM_SYSCALLS        ((sizeof(syscalls)) / (sizeof(syscalls[0])))
 

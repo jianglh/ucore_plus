@@ -13,7 +13,7 @@ include arch/$(ARCH)/include.mk
 
 obj-y += $(addprefix arch/$(ARCH)/, $(ARCH_OBJS))
 obj-initobj += $(addprefix arch/$(ARCH)/, $(ARCH_INITCODE_OBJ))
-TARGET_CFLAGS += $(ARCH_CFLAGS)
+TARGET_CFLAGS += $(ARCH_CFLAGS) -m64
 TARGET_LDFLAGS += $(ARCH_LDFLAGS)
 
 target-obj := $(addprefix $(ULIB_OBJ_ROOT)/, $(obj-y))

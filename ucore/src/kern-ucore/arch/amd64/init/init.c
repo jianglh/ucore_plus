@@ -22,6 +22,8 @@
 #include <lapic.h>
 #include <multiboot.h>
 
+char* bootparm;
+
 int kern_init(uint64_t, uint64_t) __attribute__ ((noreturn));
 
 static void bootaps(void)
@@ -63,6 +65,12 @@ static void parse_initrd(Mbdata *mb)
 {
 	if(!mb->flags & (1<<3))
 		kprintf("multiboot header has no modules\n");
+
+	bootparm = NULL;
+	if (mb->flags & (1 << 2)) {
+		kprintf("multiboot has cmdline: %s\n", (char *) mb->cmdline);
+		bootparm = (char*) VADDR_DIRECT(mb->cmdline);
+	}
 	int i;
 	struct Mbmod *mods = (struct Mbmod*)VADDR_DIRECT(mb->mods_addr);
 	for(i=0;i<mb->mods_count;i++){

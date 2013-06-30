@@ -168,9 +168,19 @@ void dev_init(void)
 	init_device(null);
 	init_device(stdin);
 	init_device(stdout);
-	init_device(disk0);
+	init_device(disk);
+	//init_device(disk0);
 	/* for Nand flash */
 	init_device(disk1);
+}
+
+int do_dmsetup(const char *cmd, const char *source, const char *rule)
+{	
+	if (strcmp(cmd, "create")==0)
+		dev_init_mapper(source, rule);
+	else if (strcmp(cmd, "remove")==0)
+		dev_remove_mapper(source);
+	return 0;
 }
 
 /*
